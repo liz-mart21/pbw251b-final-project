@@ -1,0 +1,156 @@
+---
+title: 'Exploring Valley Fever (Coccidioidomycosis) in California from 2018 - 2022'
+name: 'Lizbeth Martinez'
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+```{r}
+# flex dashboard (final product) accessible through this link: https://rpubs.com/lmart21/kp_worksample
+```
+
+```{r setup, include=FALSE}
+pacman::p_load( # load packages
+  rio,                
+  here,           
+  tidyverse,      
+  flexdashboard,   
+  shiny,           
+  plotly,          
+  DT               
+)
+
+# load data and assign to variable
+ca <- read.csv("~/desktop/odp_idb_2001_2022_ddg_compliant.csv")
+```
+
+# Overview
+
+ **Title:** Exploring Trends of Coccidioidomycosis (Valley Fever) in California from 2018 - 2021
+
+
+**Subtitle:** An in-depth look into incidence rates and case counts by sex in California from 2018 - 2021
+
+
+**Data Source:** California Department of Public Health, Center for Infectious Diseases, Infectious Diseases Branch, Surveillance and Statistics Section, 2001-2022. Infectious-Diseases-by-Disease-County-Year-Sex.csv (https://data.chhs.ca.gov/dataset/infectious-disease)
+
+
+**Background:** This data, provided by the California Department of Public Health, quantifies case counts and incidence rates per 100,000 population per California county, year, and sex of reported communicable diseases from 2001 - 2022. In addition, population, lower and upper bound of the 95% confidence interval for the calculated rates using the "Exact Clopper-Pearson" method. Cases for these diseases are reported by laboratories/physicians for California residents. In addition, the time frame of 2001 - 2022 pertains to the estimated onset date, which is defined as the date closest to the time when symptoms first appeared. County is defined where the case-patient resident during illness onset and state-wide total. Patient's sex is reported by provider and defined as the following:  Female (including male to female transgender) and Male (including female to male transgender). Total includes the sum of "Male",  "Female"  and "Other". "Other" captures persons who reported a gender other than "Male" or "Female", which includes instances where gender is missing. All definitions obtained from provided Data Dictionary (https://data.chhs.ca.gov/dataset/infectious-disease/resource/99e2b824-0b6f-486c-96d7-a2529767fda3).
+
+
+**Research Questions:**
+
+1. What is the trend of Coccidioidomycosis (Valley Fever) incidence rates in California from 2018 - 2022?
+
+    *Background:* Valley fever is an infectious diseases caused by a fungus that grows in the soil across California and the southwestern United States (CPPH 2023). If these fungus spores are inhaled, it infects the lungs and cause various symptoms such as cough, fever, fatigue and difficulty breathing. Most cases reported in California are reported from the Central Valley (Kern, Fresno, Kings, Madera, Tulare) and Central Coast counties (CDPH 2023). The time frame 2018 - 2022 was chosen 
+
+2. Is there a difference in overall reported disease count between female and male sexes in California from 2018 - 2022?
+
+    *Background:* Various factors, including socioeconomic and occupational factors, play a role in determining risk and exposure to infectious agents (CDPH 2023). In addition, it is important to note the limitations of surveillance systems. Although the current California Department of Health surveillance system in place provides detection of cases, it is probable that there is an underestimation of cases since these cases must be clinically diagnosed. There are multiple obstacles and barriers that many face when accessing medical care for a correct diagnosis. 
+    
+**Results:** 
+
+1. (Tab 2) Once years (2018, 2019, 2020, 2021, 2022) and disease (Coccidioidomycosis) are selected, we see the following incidence rates (per 100,000) for California in order: 19. 356, 23.008, 18.388, 20.507, 19.091. There seems to be a noticeable decrease in incidence rates from 2019 to 2020. I believe that this decrease is due to the COVID-19 pandemic, where cases were rising and the majority of resources shifted towards SARS-CoV-2 cases. Future work includes continuing the first enhanced novel surveillance project under CDPH (I got to conduct interviews in Spanish w/ this team!) and advocating for those who at high risk of Valley fever. 
+
+
+2. (Tab 3) Overall, we see higher case count in males than females across all years. Occupational factors, such as working outside versus inside (e.g. farmworker), play a major role in increasing risk for Valley fever transmission. Both sexes experience a sharp decline in case counts in 2020. I believe this is due to the COVID-19 pandemic, and the allocation of resources to continue the surveillance system at highest capacity during 2020. 
+
+
+**Take-home Message:** Surveillance systems, including the current California Department of Health surveillance system, are important for determining where interventions, public outreach, and allocation of other resources have most impact. I strongly believe that surveillance systems are necessary within the public health field, and gives public health practicioners the data and tools we need to make informed decisions.
+
+
+**References:** 
+1. CDPH, Valley Fever (https://www.cdph.ca.gov/Programs/CID/DCDC/Pages/ValleyFeverBasics.aspx)
+
+
+# Exploring the Data
+
+### The data is provided below: California Department of Public Health, Center for Infectious Diseases, Infectious Diseases Branch, Surveillance and Statistics Section, 2001-2022. Infectious-Diseases-by-Disease-County-Year-Sex.csv
+
+```{css, echo=FALSE}
+.datatables.html-widget.html-widget-static-bound {
+  height: auto !important;
+  width: 90vw !important;
+}
+.dataTables_scrollBody {
+  height: 400px !important;
+  overflow-y: auto;
+}
+```
+
+```{r}
+# showing data in format of table
+datatable(ca, 
+          class = 'cell-border strip',
+          rownames = F,
+          extensions = 'Buttons', options = list(dom = 'Btpl',
+                                                 buttons = c('copy', # able to do the following to the data:
+                                                             'csv',
+                                                             'excel',
+                                                             'pdf',
+                                                             'print'),
+                                                 pageLength = 30, # how many rows of data available per page
+                                                 lengthMenu = c(10,20,30)), # options for page length
+          height = "fit-content") %>%
+  formatStyle("Disease", fontWeight = "bold") # font format
+```
+
+
+
+# Incidence Rates (per 100,000 population) for Reported Infectious Diseases across California from 2001 - 2022
+
+### 1. What is the trend of Coccidioidomycosis (Valley Fever) from 2018 - 2022?
+
+```{r}
+ca$Year <- factor(ca$Year) # converts year column (number var) in data frame (ca) to categorical var
+ca1 <- ca %>% 
+  filter(Year %in% c(2018, 2019, 2020, 2021, 2022)) %>% # filter rows in ca for selected years
+  filter(Sex == "Total" & County == "California") %>% # filter rows for total sex AND county california 
+  filter(Disease == "Coccidioidomycosis") # filter for disease
+
+# create visualization for filtered ca1 data frame
+VF_vis <- ggplot(ca1, aes(x = County, # x-axis
+                       y = Rate, # y-axis
+                       fill = Disease,
+                       label = Rate)) +
+         labs(x = "State",
+                y = "Incidence Rate (per 100,000)") + # axis titles
+            geom_bar(stat = "identity", 
+                     color = "black") +
+            theme_classic(base_family = "arial", # font type
+                          base_size = 15) + # size
+         theme(legend.position = "bottom") + # legend positioned at bottom of bar chart
+         geom_text(position = position_dodge(0.9), vjust = -0.5, size = 3, color = "black") + # adjusts labels on top of bars
+  facet_grid(~ Year) # puts each year side by side based on Year
+VF_vis
+```
+
+# Case Count for Coccidioidomycosis for Sex (Male versus Female) in California from 2018 - 2022
+
+### **2.** Is there a difference in overall reported Coccidioidomycosis case count between Female and Male in California from 2018 - 2022?
+```{r}
+# Case Count for Sex for Cocci cases in California from 2018 - 2022
+ca$Rate <- as.numeric(as.character(ca$Rate))  # from character var to numeric var
+ca2 <- ca %>%
+  filter(Year %in% c(2018, 2019, 2020, 2021, 2022)) %>% # filter rows of ca for specified years
+  group_by(Year, Sex) %>% 
+  filter(Sex != "Total" & County == "California") %>% 
+   summarise(total_cases = sum(Cases, na.rm = TRUE),  .groups = 'drop') # make new var with sum of total cases column for each year/sex
+
+
+# interactive bar chart
+ggplotly(ggplot(ca2,
+       aes(x = Year,
+           y = total_cases,
+           fill = Sex))  +
+         labs(y = "Total Case Count") +
+  geom_bar(stat = "identity") + 
+  theme_classic(base_family = "arial") +
+  scale_fill_manual(values = c("Male" = "seagreen", "Female" = "dodgerblue3")) + # fill colors by sex
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) + # x-axis label adjustments
+  facet_wrap(~ Sex) + # show bar charts side by side
+  theme(legend.position = "right")) # legend position
+    
+```
+
